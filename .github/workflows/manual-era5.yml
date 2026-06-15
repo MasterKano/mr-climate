@@ -1,0 +1,57 @@
+name: Manual ERA5 Fetch
+
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Year to process, e.g. 2026"
+        required: true
+        default: "2026"
+      month:
+        description: "Month to process, e.g. 5"
+        required: true
+        default: "5"
+
+jobs:
+  era5:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Configure CDS credentials
+        env:
+          CDSAPI_URL: ${{ secrets.CDSAPI_URL }}
+          CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+        run: |
+          if [ -z "$CDSAPI_URL" ] || [ -z "$CDSAPI_KEY" ]; then
+            echo "Missing CDSAPI_URL or CDSAPI_KEY GitHub secret"
+            exit 1
+          fi
+          cat > ~/.cdsapirc <<EOF
+          url: $CDSAPI_URL
+          key: $CDSAPI_KEY
+          EOF
+
+      - name: Download next ERA5 month
+        run: python scripts/fetch_weather.py --download
+
+      - name: Process requested ERA5 file
+        run: python scripts/process_era5_file.py ${{ inputs.year }} ${{ inputs.month }}
+
+      - name: Show generated new rows
+        run: cat data/weather_new_rows.csv
+
+      - name: Validate existing pipeline
+        run: python scripts/run_pipeline.py
