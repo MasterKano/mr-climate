@@ -45,10 +45,7 @@ jobs:
             echo "Missing CDSAPI_URL or CDSAPI_KEY GitHub secret"
             exit 1
           fi
-          cat > ~/.cdsapirc <<EOF
-url: $CDSAPI_URL
-key: $CDSAPI_KEY
-EOF
+          printf "url: %s\nkey: %s\n" "$CDSAPI_URL" "$CDSAPI_KEY" > ~/.cdsapirc
 
       - name: Download next ERA5 month
         run: python scripts/fetch_weather.py --download --year ${{ inputs.year }} --month ${{ inputs.month }}
