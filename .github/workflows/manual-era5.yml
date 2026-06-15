@@ -56,5 +56,11 @@ jobs:
       - name: Show generated new rows
         run: cat data/weather_new_rows.csv
 
+      - name: Upload generated new rows
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-new-rows-${{ inputs.year }}-${{ inputs.month }}
+          path: data/weather_new_rows.csv
+
       - name: Validate existing pipeline
         run: python scripts/run_pipeline.py
