@@ -46,9 +46,9 @@ jobs:
             exit 1
           fi
           cat > ~/.cdsapirc <<EOF
-          url: $CDSAPI_URL
-          key: $CDSAPI_KEY
-          EOF
+url: $CDSAPI_URL
+key: $CDSAPI_KEY
+EOF
 
       - name: Download next ERA5 month
         run: python scripts/fetch_weather.py --download --year ${{ inputs.year }} --month ${{ inputs.month }}
