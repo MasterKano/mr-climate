@@ -81,10 +81,18 @@ def build_request(year, month):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--download", action="store_true", help="Actually call the Copernicus API")
+    parser.add_argument("--year", type=int, default=None, help="Target year. Defaults to next month after history.")
+    parser.add_argument("--month", type=int, default=None, help="Target month. Defaults to next month after history.")
     args = parser.parse_args()
 
     latest_year, latest_month = get_latest_history_month()
-    target_year, target_month = next_month(latest_year, latest_month)
+
+    if args.year is None and args.month is None:
+        target_year, target_month = next_month(latest_year, latest_month)
+    elif args.year is not None and args.month is not None:
+        target_year, target_month = args.year, args.month
+    else:
+        raise ValueError("Provide both --year and --month, or neither.")
 
     request = build_request(target_year, target_month)
     output_path = RAW_DIR / f"era5_{target_year}_{target_month:02d}.nc"
