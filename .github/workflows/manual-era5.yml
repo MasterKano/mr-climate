@@ -30,6 +30,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Check CDS secrets
+        env:
+          CDSAPI_URL: ${{ secrets.CDSAPI_URL }}
+          CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+        run: python scripts/check_cds_secrets.py
+
       - name: Configure CDS credentials
         env:
           CDSAPI_URL: ${{ secrets.CDSAPI_URL }}
