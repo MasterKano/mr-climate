@@ -147,3 +147,6 @@ workbook/Wind Rain Temp (Generated).xlsx
 
 # Local Python environment
 .venv/
+
+# Test downloads
+/data/test_era5_single_point.nc
