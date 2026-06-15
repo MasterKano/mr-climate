@@ -153,3 +153,7 @@ workbook/Wind Rain Temp (Generated).xlsx
 
 # Test downloads
 /data/test_era5_single_point.nc
+
+# Raw ERA5 downloads
+/data/raw/
+*.nc
