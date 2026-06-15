@@ -1,0 +1,4 @@
+year,month,date,variable,value,unit,source_workbook,source_sheet
+2026,5,2026-05-01,wind,,m/s,manual,Wind
+2026,5,2026-05-01,rain,,mm/d,manual,Rain
+2026,5,2026-05-01,temp,,deg_c,manual,Temp
