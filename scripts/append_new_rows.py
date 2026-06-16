@@ -1,48 +1,51 @@
 from pathlib import Path
 import pandas as pd
 
-HISTORY_CSV = Path("data/weather_history.csv")
-NEW_ROWS_CSV = Path("data/weather_new_rows.csv")
-EXPECTED_VARIABLES = {"wind", "rain", "temp"}
+ROOT = Path(__file__).resolve().parents[1]
+history_path = ROOT / "data" / "weather_history.csv"
+new_rows_path = ROOT / "data" / "weather_new_rows.csv"
+
+KEYS = ["year", "month", "variable"]
 
 
 def main():
-    if not NEW_ROWS_CSV.exists():
-        raise FileNotFoundError(
-            f"Missing {NEW_ROWS_CSV}. Create it with columns: "
-            "year,month,date,variable,value,unit,source_workbook,source_sheet"
-        )
+    if not new_rows_path.exists():
+        raise FileNotFoundError(f"Missing new rows file: {new_rows_path}")
 
-    history = pd.read_csv(HISTORY_CSV)
-    new_rows = pd.read_csv(NEW_ROWS_CSV)
+    history = pd.read_csv(history_path)
+    new_rows = pd.read_csv(new_rows_path)
 
-    required_columns = list(history.columns)
-    missing = set(required_columns) - set(new_rows.columns)
+    required = {"year", "month", "date", "variable", "value", "unit", "source_workbook", "source_sheet"}
+    missing = required - set(new_rows.columns)
     if missing:
         raise ValueError(f"New rows file is missing columns: {sorted(missing)}")
 
-    new_rows = new_rows[required_columns]
+    new_rows = new_rows.sort_values(KEYS).copy()
 
-    variables = set(new_rows["variable"].unique())
-    if variables != EXPECTED_VARIABLES:
-        raise ValueError(f"New rows must contain exactly wind, rain, temp. Found: {sorted(variables)}")
+    duplicated_new = new_rows[new_rows.duplicated(KEYS, keep=False)]
+    if not duplicated_new.empty:
+        raise ValueError(f"Duplicate rows inside new rows file:\n{duplicated_new}")
 
-    periods = new_rows[["year", "month"]].drop_duplicates()
-    if len(periods) != 1:
-        raise ValueError("New rows must contain exactly one year/month period")
+    existing_keys = history[KEYS].astype(str).agg("|".join, axis=1)
+    incoming_keys = new_rows[KEYS].astype(str).agg("|".join, axis=1)
 
-    combined = pd.concat([history, new_rows], ignore_index=True)
+    rows_to_add = new_rows[~incoming_keys.isin(existing_keys)].copy()
 
-    duplicates = combined[combined.duplicated(subset=["year", "month", "variable"], keep=False)]
-    if not duplicates.empty:
-        raise ValueError(f"Duplicate year/month/variable rows found:\n{duplicates}")
+    if rows_to_add.empty:
+        target_months = new_rows[["year", "month"]].drop_duplicates().to_dict("records")
+        print(f"No new rows to append. Already present: {target_months}")
+        return
 
+    combined = pd.concat([history, rows_to_add], ignore_index=True)
     combined = combined.sort_values(["year", "month", "variable"]).reset_index(drop=True)
-    combined.to_csv(HISTORY_CSV, index=False)
 
-    period = periods.iloc[0]
-    print(f"Appended {len(new_rows)} rows to {HISTORY_CSV}")
-    print(f"Added month: {int(period['year'])}-{int(period['month']):02d}")
+    duplicated_combined = combined[combined.duplicated(KEYS, keep=False)]
+    if not duplicated_combined.empty:
+        raise ValueError(f"Duplicate year/month/variable rows found after append:\n{duplicated_combined}")
+
+    combined.to_csv(history_path, index=False)
+    print(f"Appended {len(rows_to_add)} rows")
+    print(f"History rows: {len(history)} -> {len(combined)}")
 
 
 if __name__ == "__main__":
