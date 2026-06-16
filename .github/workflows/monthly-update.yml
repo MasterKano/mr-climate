@@ -1,0 +1,88 @@
+name: Monthly Weather Update
+
+on:
+  schedule:
+    # Runs at 06:00 UTC on the 1st day of every month
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  monthly-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Determine previous month
+        run: |
+          python - <<'PY' >> "$GITHUB_ENV"
+          from datetime import date
+          today = date.today()
+          year = today.year
+          month = today.month - 1
+          if month == 0:
+              month = 12
+              year -= 1
+          print(f"TARGET_YEAR={year}")
+          print(f"TARGET_MONTH={month}")
+          PY
+
+      - name: Check CDS secrets
+        env:
+          CDSAPI_URL: ${{ secrets.CDSAPI_URL }}
+          CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+        run: python scripts/check_cds_secrets.py
+
+      - name: Configure CDS API
+        env:
+          CDSAPI_URL: ${{ secrets.CDSAPI_URL }}
+          CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+        run: |
+          printf "url: %s\nkey: %s\n" "$CDSAPI_URL" "$CDSAPI_KEY" > ~/.cdsapirc
+          chmod 600 ~/.cdsapirc
+
+      - name: Fetch ERA5 data
+        run: python scripts/fetch_weather.py "$TARGET_YEAR" "$TARGET_MONTH"
+
+      - name: Process ERA5 data
+        run: python scripts/process_era5_file.py "$TARGET_YEAR" "$TARGET_MONTH"
+
+      - name: Append new rows
+        run: python scripts/append_new_rows.py
+
+      - name: Export Excel feed
+        run: python scripts/export_excel_feed.py
+
+      - name: Validate history
+        run: python scripts/validate_history.py
+
+      - name: Update generated workbook
+        run: python scripts/update_workbook_from_csv.py
+
+      - name: Promote generated workbook to active workbook
+        run: cp "workbook/Wind Rain Temp (Generated).xlsx" "workbook/Wind Rain Temp (Active).xlsx"
+
+      - name: Verify workbook
+        run: |
+          python scripts/update_workbook_from_csv.py
+          python scripts/compare_workbooks.py
+
+      - name: Commit monthly update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/weather_history.csv data/weather_excel_feed.csv "workbook/Wind Rain Temp (Active).xlsx"
+          git commit -m "Add monthly weather update for ${TARGET_YEAR}-${TARGET_MONTH}" || echo "No changes to commit"
+          git push
