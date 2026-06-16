@@ -54,7 +54,7 @@ jobs:
           chmod 600 ~/.cdsapirc
 
       - name: Fetch ERA5 data
-        run: python scripts/fetch_weather.py "$TARGET_YEAR" "$TARGET_MONTH"
+        run: python scripts/fetch_weather.py --download --year "$TARGET_YEAR" --month "$TARGET_MONTH"
 
       - name: Process ERA5 data
         run: python scripts/process_era5_file.py "$TARGET_YEAR" "$TARGET_MONTH"
