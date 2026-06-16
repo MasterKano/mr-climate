@@ -27,7 +27,7 @@ VARIABLES = {
 }
 
 # North, West, South, East
-AREA = [48, 5, 45, 11]
+AREA = [71, 4, 55, 32]
 
 
 def get_latest_history_month():
