@@ -50,6 +50,14 @@ jobs:
       - name: Download next ERA5 month
         run: python scripts/fetch_weather.py --download --year ${{ inputs.year }} --month ${{ inputs.month }}
 
+      - name: Upload raw ERA5 file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-era5-${{ inputs.year }}-${{ inputs.month }}
+          path: data/raw/era5_${{ inputs.year }}_${{ format('{0}', inputs.month) }}.nc
+          if-no-files-found: ignore
+
       - name: Process requested ERA5 file
         run: python scripts/process_era5_file.py ${{ inputs.year }} ${{ inputs.month }}
 
