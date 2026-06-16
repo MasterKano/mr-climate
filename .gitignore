@@ -157,3 +157,6 @@ workbook/Wind Rain Temp (Generated).xlsx
 # Raw ERA5 downloads
 /data/raw/
 *.nc
+
+# Generated new rows
+/data/weather_new_rows.csv
