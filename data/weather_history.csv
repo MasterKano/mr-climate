@@ -2033,3 +2033,6 @@ year,month,date,variable,value,unit,source_workbook,source_sheet
 2026,6,2026-06-01,rain,3.0810813109079995,mm/d,data/raw/era5_2026_06.nc,Rain
 2026,6,2026-06-01,temp,13.405175781250025,deg_c,data/raw/era5_2026_06.nc,Temp
 2026,6,2026-06-01,wind,4.138603687286377,m/s,data/raw/era5_2026_06.nc,Wind
+2026,7,2026-07-01,rain,3.07012181128225,mm/d,data/raw/era5_2026_07.nc,Rain
+2026,7,2026-07-01,temp,14.481591796875025,deg_c,data/raw/era5_2026_07.nc,Temp
+2026,7,2026-07-01,wind,4.404688358306885,m/s,data/raw/era5_2026_07.nc,Wind
